@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@import "./styles/phase.css";
+
+/* 休憩中（<html data-phase="break">、styles/phase.css）だけ効くクラス: `break:from-[#c4b5fd]` 等 */
+@custom-variant break (&:where([data-phase="break"], [data-phase="break"] *));
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, "Segoe UI", "Hiragino Sans",
+    "Noto Sans JP", sans-serif;
+}
+
+/*
+ * テーマ: 深い紫〜黒の背景にネオン。
+ * 列の色 = 未着手: 紫→青 / やってる: ピンク→オレンジ / やった: ライム→シアン
+ */
+:root {
+  color-scheme: dark;
+  --void: #0a0613;
+  --panel: #120b21;
+  --panel-2: #170f29;
+  --neon-violet: #a855f7;
+  --neon-blue: #3b82f6;
+  --neon-pink: #ff3ea5;
+  --neon-orange: #ff8a1f;
+  --neon-lime: #a3ff3c;
+  --neon-cyan: #22e4ff;
+
+  /* 面・文字（休憩中は styles/phase.css で明るいテーマに差し替え） */
+  --kb-void: #0a0613;
+  --kb-text: #ece8f7;
+  --kb-header: rgb(13 8 25 / 0.85);
+  --kb-sidebar: rgb(13 8 25 / 0.8);
+  --kb-panel: #120b21;
+  --kb-panel-2: #170f29;
+  --kb-card: rgb(22 14 40 / 0.92);
+  --kb-card-sheen: rgb(255 255 255 / 0.085);
+  --kb-card-inset: rgb(255 255 255 / 0.07);
+  --kb-card-shadow: rgb(0 0 0 / 0.9);
+  --kb-scroll: rgb(255 255 255 / 0.16);
+  --kb-selection: rgb(255 62 165 / 0.45);
+  --kb-event-sink: #0a0613;
+  --kb-event-mix: 84%;
+  --kb-contrast: #ffffff;
+  --kb-muted-text: #d4d4e0;
+  /* 進みリング（集中 = ネオンのピンク → オレンジ） */
+  --kb-ring-a: #ff3ea5;
+  --kb-ring-b: #ff8a1f;
+  --kb-ring-glow: rgb(255 62 165 / 0.7);
+  --kb-ring-track: rgb(255 255 255 / 0.1);
+  --kb-ring-text: #fbcfe8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--kb-void);
+  background-image:
+    radial-gradient(900px 520px at 8% -12%, rgb(168 85 247 / 0.28), transparent 62%),
+    radial-gradient(760px 460px at 62% -18%, rgb(255 62 165 / 0.16), transparent 60%),
+    radial-gradient(680px 520px at 100% 110%, rgb(34 228 255 / 0.1), transparent 60%);
+  background-attachment: fixed;
+  color: var(--kb-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--kb-selection);
+}
+
+/* スクロールバーを暗い背景に馴染ませる */
+* {
+  scrollbar-color: var(--kb-scroll) transparent;
+}
+
+/* line clamp helper */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@layer components {
+  /* カードのガラス風の面 */
+  .glass-card {
+    background:
+      linear-gradient(160deg, var(--kb-card-sheen), transparent 55%),
+      var(--kb-card);
+    box-shadow:
+      inset 0 1px 0 var(--kb-card-inset),
+      0 6px 18px -10px var(--kb-card-shadow);
+  }
+}
+
+/* ホバーで一度だけ軽く揺れる */
+@keyframes kb-wiggle {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30% {
+    rotate: -1.2deg;
+  }
+  65% {
+    rotate: 0.8deg;
+  }
+}
+
+.kb-wiggle:hover {
+  animation: kb-wiggle 0.36s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-wiggle:hover {
+    animation: none;
+  }
+}

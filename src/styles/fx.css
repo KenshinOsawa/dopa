@@ -1,0 +1,492 @@
+/* 演出（lib/celebrate.ts が DOM を直接差し込む）。ボードの描画とは独立したレイヤー。 */
+.kb-fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+  overflow: hidden;
+}
+
+.kb-pop {
+  position: absolute;
+  translate: -50% -50%;
+  white-space: nowrap;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px rgb(255 62 165 / 0.55)) drop-shadow(0 2px 0 rgb(0 0 0 / 0.6));
+  animation: kb-pop 0.95s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes kb-pop {
+  0% {
+    transform: scale(0.3) rotate(-8deg);
+    opacity: 0;
+  }
+  18% {
+    transform: scale(1.25) rotate(-4deg);
+    opacity: 1;
+  }
+  32% {
+    transform: scale(1) rotate(-4deg);
+  }
+  75% {
+    transform: translateY(-18px) scale(1) rotate(-4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-34px) scale(0.95) rotate(-4deg);
+    opacity: 0;
+  }
+}
+
+.kb-xp {
+  position: absolute;
+  translate: -50% -50%;
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: 18px;
+  color: #eaffb0;
+  text-shadow:
+    0 0 10px rgb(163 255 60 / 0.8),
+    0 0 22px rgb(34 228 255 / 0.5),
+    0 2px 0 rgb(0 0 0 / 0.6);
+  animation: kb-xp 1.3s cubic-bezier(0.15, 0.8, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes kb-xp {
+  0% {
+    transform: translateY(6px) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(0) scale(1.15);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-64px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* レベルアップの全画面 */
+.kb-levelup {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: radial-gradient(circle at 50% 50%, rgb(255 62 165 / 0.35), rgb(10 6 19 / 0.82) 60%);
+  animation: kb-fade 2.6s ease forwards;
+  cursor: pointer;
+}
+
+.kb-levelup-title {
+  font-size: clamp(44px, 11vw, 120px);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, var(--neon-lime), var(--neon-cyan), var(--neon-violet), var(--neon-pink));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 24px rgb(255 62 165 / 0.7));
+  animation: kb-slam 0.7s cubic-bezier(0.2, 1.4, 0.3, 1) both;
+}
+
+.kb-levelup-sub {
+  font-size: clamp(20px, 4vw, 34px);
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 16px rgb(34 228 255 / 0.8);
+  animation: kb-slam 0.7s 0.15s cubic-bezier(0.2, 1.4, 0.3, 1) both;
+}
+
+@keyframes kb-slam {
+  0% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes kb-fade {
+  0%,
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ヘッダーのゲージが伸びたとき */
+@keyframes kb-gauge-flash {
+  0% {
+    filter: brightness(2.2) saturate(1.4);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+.kb-gauge-flash {
+  animation: kb-gauge-flash 0.8s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-levelup-title,
+  .kb-levelup-sub,
+  .kb-gauge-flash {
+    animation: none;
+  }
+  .kb-pop,
+  .kb-xp {
+    animation: kb-fade-quick 1.2s ease forwards;
+  }
+  .kb-levelup {
+    animation: kb-fade 2.2s ease forwards;
+  }
+}
+
+@keyframes kb-fade-quick {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------
+ * 「やった」のフェス演出（lib/festShow.ts）。全画面だが pointer-events: none（D&D を妨げない）。
+ * 動かすのは transform / opacity だけ（WAAPI・下のキーフレーム）
+ * ------------------------------------------------------------------ */
+.kb-fest {
+  --fest-a: var(--neon-lime);
+  --fest-b: var(--neon-cyan);
+  --fest-c: var(--neon-pink);
+  position: fixed;
+  inset: 0;
+  z-index: 84; /* 紙吹雪の canvas（85）の下・レベルアップ（80）より上 */
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+
+.kb-fest-dim {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgb(20 8 40 / 0.55), rgb(4 2 10 / 0.8) 70%);
+}
+
+.kb-fest--calm .kb-fest-dim {
+  background: rgb(8 4 18 / 0.5);
+}
+
+/* 拍で明滅する枠（ボード全体の色が脈打つ） */
+.kb-fest-pulse {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 50% 115%, var(--fest-a), transparent 55%),
+    radial-gradient(ellipse at 50% -15%, var(--fest-c), transparent 50%),
+    radial-gradient(ellipse at -10% 50%, var(--fest-b), transparent 40%),
+    radial-gradient(ellipse at 110% 50%, var(--fest-b), transparent 40%);
+  will-change: opacity;
+}
+
+.kb-fest--fever .kb-fest-pulse {
+  background:
+    radial-gradient(ellipse at 50% 115%, #ff3ea5, transparent 55%),
+    radial-gradient(ellipse at 50% -15%, #22e4ff, transparent 50%),
+    radial-gradient(ellipse at -10% 50%, #ffd23f, transparent 40%),
+    radial-gradient(ellipse at 110% 50%, #a855f7, transparent 40%);
+}
+
+.kb-fest-lights,
+.kb-fest-lasers {
+  position: absolute;
+  inset: 0;
+}
+
+/* ステージのサーチライト（下から伸びる光の円錐） */
+.kb-fest-search {
+  position: absolute;
+  bottom: -8vh;
+  width: 42vw;
+  height: 150vh;
+  margin-left: -21vw;
+  transform-origin: 50% 100%;
+  clip-path: polygon(47% 100%, 53% 100%, 100% 0, 0 0);
+  background: linear-gradient(to top, rgb(255 255 255 / 0.5), rgb(200 220 255 / 0.12) 55%, transparent 90%);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.kb-fest-search--l {
+  left: 22%;
+}
+
+.kb-fest-search--r {
+  left: 78%;
+}
+
+/* レーザー光線（下から扇状に交差・回転） */
+.kb-fest-laser {
+  --beam: var(--neon-cyan);
+  position: absolute;
+  bottom: -2vh;
+  width: 4px;
+  height: 135vh;
+  margin-left: -2px;
+  border-radius: 2px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(to top, #fff 0%, var(--beam) 6%, var(--beam) 45%, transparent 95%);
+  box-shadow:
+    0 0 8px 1px var(--beam),
+    0 0 22px 3px color-mix(in srgb, var(--beam) 45%, transparent);
+  opacity: 0.85;
+  will-change: transform;
+}
+
+.kb-fest-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+}
+
+.kb-fest-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 16px;
+  text-align: center;
+}
+
+.kb-fest-title {
+  position: relative;
+  font-size: clamp(48px, 12vw, 148px);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  background: linear-gradient(90deg, var(--fest-a), var(--fest-b), #fff, var(--fest-c));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--fest-a) 70%, transparent)) drop-shadow(0 3px 0 rgb(0 0 0 / 0.7));
+  animation: kb-fest-zoom 0.55s cubic-bezier(0.16, 1.3, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.kb-fest--fever .kb-fest-title {
+  background: linear-gradient(90deg, #ff3ea5, #ff8a1f, #ffd23f, #a3ff3c, #22e4ff, #3b82f6, #a855f7);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* グリッチ: ピンク／シアンのずれた複製が数回ブレる（transform / opacity のみ） */
+.kb-fest-title::before,
+.kb-fest-title::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  -webkit-text-fill-color: currentColor;
+  pointer-events: none;
+}
+
+.kb-fest-title::before {
+  color: rgb(255 62 165 / 0.85);
+  animation: kb-fest-glitch-a 0.6s steps(1, end) 0.05s both;
+}
+
+.kb-fest-title::after {
+  color: rgb(34 228 255 / 0.85);
+  animation: kb-fest-glitch-b 0.6s steps(1, end) 0.05s both;
+}
+
+.kb-fest-name {
+  max-width: min(80vw, 760px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(18px, 3.2vw, 32px);
+  font-weight: 800;
+  color: #fff;
+  text-shadow:
+    0 0 14px color-mix(in srgb, var(--fest-b) 80%, transparent),
+    0 2px 0 rgb(0 0 0 / 0.7);
+  animation: kb-fest-rise 0.45s 0.12s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.kb-fest-xp {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  font-weight: 900;
+  font-style: italic;
+  color: #f4ffd6;
+  text-shadow:
+    0 0 16px rgb(163 255 60 / 0.85),
+    0 0 36px rgb(34 228 255 / 0.5),
+    0 3px 0 rgb(0 0 0 / 0.7);
+  animation: kb-fest-zoom 0.45s cubic-bezier(0.16, 1.3, 0.3, 1) both;
+}
+
+.kb-fest-xp-num {
+  font-size: clamp(44px, 9vw, 104px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kb-fest-xp-unit {
+  font-size: clamp(22px, 4vw, 44px);
+}
+
+.kb-fest-combo {
+  font-size: clamp(22px, 4.2vw, 46px);
+  font-weight: 900;
+  font-style: italic;
+  background: linear-gradient(90deg, #ff3ea5, #a855f7, #22e4ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 12px rgb(255 62 165 / 0.6));
+  animation: kb-fest-rise 0.4s 0.1s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.kb-fest-combo--fever {
+  background: linear-gradient(90deg, #ff3ea5, #ff8a1f, #ffd23f, #a3ff3c, #22e4ff, #a855f7);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+@keyframes kb-fest-zoom {
+  0% {
+    transform: scale(2.8) skewX(-12deg);
+    opacity: 0;
+  }
+  45% {
+    transform: scale(0.92) skewX(4deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.04) skewX(-2deg);
+  }
+  100% {
+    transform: scale(1) skewX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes kb-fest-rise {
+  0% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes kb-fest-glitch-a {
+  0% {
+    opacity: 0.9;
+    transform: translate(-6px, 2px);
+  }
+  15% {
+    transform: translate(5px, -3px);
+  }
+  30% {
+    transform: translate(-3px, 0);
+  }
+  45% {
+    opacity: 0.7;
+    transform: translate(8px, 1px);
+  }
+  60% {
+    transform: translate(-2px, -2px);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes kb-fest-glitch-b {
+  0% {
+    opacity: 0.9;
+    transform: translate(6px, -2px);
+  }
+  15% {
+    transform: translate(-5px, 3px);
+  }
+  30% {
+    transform: translate(4px, 0);
+  }
+  45% {
+    opacity: 0.7;
+    transform: translate(-7px, -1px);
+  }
+  60% {
+    transform: translate(3px, 2px);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+}
+
+/* reduced-motion: ズーム・グリッチ無し。静かにフェードで出るだけ */
+.kb-fest--calm .kb-fest-title,
+.kb-fest--calm .kb-fest-name,
+.kb-fest--calm .kb-fest-xp,
+.kb-fest--calm .kb-fest-combo {
+  animation: kb-fest-fade-in 0.3s ease both;
+}
+
+.kb-fest--calm .kb-fest-title::before,
+.kb-fest--calm .kb-fest-title::after {
+  animation: none;
+  display: none;
+}
+
+@keyframes kb-fest-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
